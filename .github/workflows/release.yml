@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Create release archive
+      run: |
+        tar -czf claude-discord-bridge-${{ github.ref_name }}.tar.gz \
+          dist/ \
+          package.json \
+          package-lock.json \
+          README.md \
+          LICENSE \
+          .env.example \
+          scripts/
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: claude-discord-bridge-${{ github.ref_name }}.tar.gz
+        generate_release_notes: true
+        body: |
+          ## Installation
+          
+          1. Download the release archive
+          2. Extract: `tar -xzf claude-discord-bridge-${{ github.ref_name }}.tar.gz`
+          3. Install dependencies: `npm ci --production`
+          4. Configure: `cp .env.example .env` and edit
+          5. Initialize: `npm run db:init`
+          6. Start: `npm start`
+          
+          See [README](https://github.com/${{ github.repository }}) for detailed instructions.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

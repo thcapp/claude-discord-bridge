@@ -1,0 +1,55 @@
+{
+  "name": "claude-discord-bridge",
+  "version": "1.0.0",
+  "description": "Discord bot for Claude Code CLI integration with rich interactive components",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cli": "tsx scripts/test-cli.ts",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "db:init": "tsx scripts/init-db.ts",
+    "doctor": "tsx scripts/doctor.ts",
+    "register": "tsx scripts/register-commands.ts"
+  },
+  "keywords": ["discord", "bot", "claude", "ai", "cli", "tmux"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@discordjs/rest": "^2.2.0",
+    "@discordjs/voice": "^0.16.0",
+    "@octokit/rest": "^20.0.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "diff": "^5.1.0",
+    "discord-api-types": "^0.37.66",
+    "discord.js": "^14.14.1",
+    "dockerode": "^4.0.0",
+    "dotenv": "^16.3.1",
+    "glob": "^10.3.0",
+    "node-pty": "^1.0.0",
+    "simple-git": "^3.20.0",
+    "sqlite3": "^5.1.6",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.1.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
