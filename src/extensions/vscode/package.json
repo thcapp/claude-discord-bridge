@@ -1,0 +1,212 @@
+{
+  "name": "claude-discord-bridge",
+  "displayName": "Claude Discord Bridge",
+  "description": "Connect VS Code to Claude via Discord for AI-powered development",
+  "version": "1.0.0",
+  "publisher": "claude-discord",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Programming Languages", "Snippets", "Other"],
+  "keywords": ["claude", "discord", "ai", "assistant", "copilot"],
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#5865F2",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/claude-discord-bridge"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-discord.connect",
+        "title": "Connect to Claude Discord",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.disconnect",
+        "title": "Disconnect from Claude Discord",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.executeCommand",
+        "title": "Execute Command",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.askClaude",
+        "title": "Ask Claude",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.explainCode",
+        "title": "Explain Selected Code",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.refactorCode",
+        "title": "Refactor Selected Code",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.generateTests",
+        "title": "Generate Tests",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.fixErrors",
+        "title": "Fix Errors",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.startCollaboration",
+        "title": "Start Collaboration Session",
+        "category": "Claude"
+      },
+      {
+        "command": "claude-discord.joinCollaboration",
+        "title": "Join Collaboration Session",
+        "category": "Claude"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "claude-discord.askClaude",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      },
+      {
+        "command": "claude-discord.explainCode",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
+      {
+        "command": "claude-discord.refactorCode",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Discord Bridge",
+      "properties": {
+        "claude-discord.serverUrl": {
+          "type": "string",
+          "default": "ws://localhost:3002",
+          "description": "WebSocket server URL"
+        },
+        "claude-discord.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect on startup"
+        },
+        "claude-discord.showStatusBarItem": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show connection status in status bar"
+        },
+        "claude-discord.enableCollaboration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time collaboration features"
+        },
+        "claude-discord.enableInlineCompletions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code completions from Claude"
+        },
+        "claude-discord.completionDelay": {
+          "type": "number",
+          "default": 500,
+          "description": "Delay in ms before requesting completions"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-discord",
+          "title": "Claude Discord",
+          "icon": "resources/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claude-discord": [
+        {
+          "id": "claude-discord.sessions",
+          "name": "Sessions",
+          "icon": "resources/sessions.svg"
+        },
+        {
+          "id": "claude-discord.chat",
+          "name": "Chat",
+          "icon": "resources/chat.svg"
+        },
+        {
+          "id": "claude-discord.collaborators",
+          "name": "Collaborators",
+          "icon": "resources/collaborators.svg",
+          "when": "claude-discord.collaboration"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "claude-discord.explainCode",
+          "when": "editorHasSelection",
+          "group": "claude@1"
+        },
+        {
+          "command": "claude-discord.refactorCode",
+          "when": "editorHasSelection",
+          "group": "claude@2"
+        },
+        {
+          "command": "claude-discord.generateTests",
+          "when": "editorHasSelection",
+          "group": "claude@3"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "claude-chat",
+        "aliases": ["Claude Chat"],
+        "extensions": [".claude"],
+        "configuration": "./language-configuration.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-electron": "^2.3.8",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "ws": "^8.16.0",
+    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.6.0"
+  }
+}
