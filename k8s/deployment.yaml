@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+  labels:
+    app: claude-discord-bridge
+    version: v1.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: claude-discord-bridge
+  template:
+    metadata:
+      labels:
+        app: claude-discord-bridge
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: claude-discord-bridge
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: claude-discord-bridge
+        image: claude-discord-bridge:latest
+        imagePullPolicy: Always
+        ports:
+        - name: webhook
+          containerPort: 3000
+          protocol: TCP
+        - name: health
+          containerPort: 3001
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_PATH
+          value: "/data/sessions.db"
+        - name: LOG_DIR
+          value: "/logs"
+        - name: BACKUP_DIR
+          value: "/backups"
+        - name: SANDBOX_PATH
+          value: "/sandbox"
+        envFrom:
+        - secretRef:
+            name: claude-discord-secrets
+        - configMapRef:
+            name: claude-discord-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: health
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: health
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        - name: backups
+          mountPath: /backups
+        - name: sandbox
+          mountPath: /sandbox
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: claude-discord-data
+      - name: logs
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: backups
+        persistentVolumeClaim:
+          claimName: claude-discord-backups
+      - name: sandbox
+        emptyDir:
+          sizeLimit: 500Mi
+      - name: config
+        configMap:
+          name: claude-discord-config
+          items:
+          - key: claude.md
+            path: CLAUDE.md
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+  labels:
+    app: claude-discord-bridge
+spec:
+  type: ClusterIP
+  selector:
+    app: claude-discord-bridge
+  ports:
+  - name: webhook
+    port: 3000
+    targetPort: webhook
+    protocol: TCP
+  - name: health
+    port: 3001
+    targetPort: health
+    protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claude-discord-data
+  namespace: discord-bots
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claude-discord-backups
+  namespace: discord-bots
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard

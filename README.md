@@ -11,6 +11,26 @@ A powerful Discord bot that bridges Claude Code CLI with Discord, providing a ri
 
 ## ✨ Features
 
+### 📊 Feature Comparison
+
+| Feature | Basic Bot | Claude Discord Bridge |
+|---------|-----------|----------------------|
+| **Commands** | ~10 basic | **50+ advanced** |
+| **File Operations** | ❌ | ✅ Full CRUD with sandboxing |
+| **Web Integration** | ❌ | ✅ Search, fetch, scrape, APIs |
+| **Git Support** | ❌ | ✅ Full Git + GitHub integration |
+| **Process Management** | ❌ | ✅ Background tasks with PTY |
+| **AI Templates** | ❌ | ✅ 8 expert personas |
+| **Collaboration** | ❌ | ✅ Multi-user sessions |
+| **Token Tracking** | ❌ | ✅ Usage analytics & budgets |
+| **Syntax Highlighting** | Basic | ✅ 15+ languages |
+| **Security** | Basic | ✅ Advanced sandboxing & limits |
+| **Backup System** | ❌ | ✅ Automated with encryption |
+| **Health Monitoring** | ❌ | ✅ Comprehensive diagnostics |
+| **Webhooks** | ❌ | ✅ GitHub event integration |
+| **Context Menus** | ❌ | ✅ Right-click commands |
+| **Database** | ❌ | ✅ SQLite with migrations |
+
 ### 🎮 Rich Interactive Components
 - **Smart Control Panels** - Every response includes interactive buttons (Continue, Regenerate, Stop, Branch, Debug)
 - **Dynamic Select Menus** - Switch between Claude models, projects, and sessions on the fly
@@ -26,6 +46,56 @@ A powerful Discord bot that bridges Claude Code CLI with Discord, providing a ri
 - **File Attachments** - Share code files and images directly with Claude
 - **Streaming Responses** - Real-time output streaming from Claude CLI
 - **Smart Output Parsing** - Intelligent formatting of code blocks, lists, and responses
+
+### 📁 File Operations
+- **Complete File Management** - Read, write, edit, delete, move, copy files
+- **Directory Navigation** - List contents, tree view, search across directories
+- **Advanced Search** - Regex support, file type filtering, content search
+- **Syntax Highlighting** - Support for 15+ programming languages
+- **Security Sandboxing** - Safe file operations with path validation
+
+### 🌐 Web Integration
+- **Web Search** - Search the web and get AI-summarized results
+- **Page Fetching** - Fetch and parse web pages with content extraction
+- **API Requests** - Make HTTP requests with authentication support
+- **Documentation Search** - Quick access to technical documentation
+- **Web Scraping** - Extract structured data from websites
+
+### 💻 Bash & Process Management
+- **Command Execution** - Run bash commands with security controls
+- **Background Processes** - Launch and manage long-running tasks
+- **Process Monitoring** - Track CPU, memory, and output of processes
+- **PTY Support** - Full terminal emulation for interactive commands
+- **Output Streaming** - Real-time output from running processes
+- **Security Features** - Command whitelisting/blacklisting, sandboxing
+
+### 🔀 Git & GitHub Integration
+- **Full Git Support** - Status, commit, branch, merge, push, pull
+- **GitHub Integration** - Create PRs, issues, trigger workflows
+- **Code Review** - Review PRs directly from Discord
+- **Webhook Support** - Receive GitHub events in Discord
+- **Diff Visualization** - Beautiful diff formatting with syntax highlighting
+- **Branch Management** - Create, switch, delete branches
+
+### 🤖 AI Templates & Personas
+- **8 Expert Personas** - Code Reviewer, Architect, Debugger, Teacher, DevOps, Full-Stack, Data Scientist, Security Expert
+- **Custom Templates** - Create your own AI personas with specific behaviors
+- **Context-Aware** - Templates adapt to your project and coding style
+- **Specialized Tools** - Each template has access to relevant tools
+
+### 👥 Collaboration Features
+- **Multi-User Sessions** - Multiple users can work in the same Claude session
+- **Session Handoff** - Transfer control between team members
+- **Observation Mode** - Watch-only access for learning
+- **Permission Management** - Fine-grained access control
+- **Session Recording** - Record and replay coding sessions
+
+### 📊 Usage Analytics & Control
+- **Token Tracking** - Monitor token usage across sessions
+- **Cost Estimation** - Real-time cost tracking for API usage
+- **Budget Management** - Set daily/monthly token limits
+- **Usage Analytics** - Detailed statistics and reports
+- **Optimization Suggestions** - Tips to reduce token consumption
 
 ### 💰 Cost Effective
 - **Fixed Monthly Cost** - Leverages your Claude Code CLI subscription ($20-200/month)
@@ -128,6 +198,8 @@ npm run dev
 
 ### Complete Command Reference
 
+> **Note:** The bot now includes 50+ commands across 10+ categories. For complete documentation, see [COMMANDS.md](docs/COMMANDS.md)
+
 #### 💬 **Claude Interaction** (`/claude`)
 Primary command for interacting with Claude Code CLI.
 
@@ -220,6 +292,59 @@ Get help and documentation.
 
 Available topics: Getting Started, Commands, Sessions, Code Features, Projects, Shortcuts, Troubleshooting
 
+### 📁 File Operations (`/file`)
+Complete file system management.
+
+| Subcommand | Description |
+|------------|-------------|
+| `read` | Read file contents with syntax highlighting |
+| `write` | Create or overwrite files |
+| `edit` | Edit files with find and replace |
+| `search` | Search files with regex support |
+| `delete` | Delete files or directories |
+| `ls` | List directory contents |
+| `tree` | Display directory tree |
+
+### 🌐 Web Commands (`/web`)
+Web integration and API access.
+
+| Subcommand | Description |
+|------------|-------------|
+| `search` | Search the web |
+| `fetch` | Fetch and parse web pages |
+| `api` | Make API requests |
+| `docs` | Search documentation |
+
+### 🔀 Git Commands (`/git`)
+Full Git version control.
+
+| Subcommand | Description |
+|------------|-------------|
+| `status` | Repository status |
+| `commit` | Create commits |
+| `branch` | Manage branches |
+| `push` | Push to remote |
+| `pull` | Pull from remote |
+
+### 🐙 GitHub Commands (`/github`)
+GitHub platform integration.
+
+| Subcommand | Description |
+|------------|-------------|
+| `pr` | Manage pull requests |
+| `issue` | Manage issues |
+| `repo` | Repository operations |
+| `workflow` | Trigger workflows |
+
+### Context Menu Commands
+
+Right-click on any message to access:
+- **Analyze Code** - Deep code analysis with suggestions
+- **Debug Error** - Debug error messages and stack traces
+- **Explain Selection** - Get detailed explanations
+- **Optimize Code** - Performance optimization suggestions
+- **Security Scan** - Check for vulnerabilities
+
 ### Interactive Components
 
 Every Claude response includes an interactive control panel:
@@ -251,19 +376,20 @@ When enabled, you can use reactions for quick actions:
 
 ### Environment Variables
 
-See [.env.example](.env.example) for all available options:
+See [CONFIGURATION.md](docs/CONFIGURATION.md) for complete configuration guide.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CLAUDE_CLI_PATH` | Path to Claude Code CLI | `claude-code` |
-| `SESSION_TYPE` | Session manager type | `tmux` |
-| `PROJECT_BASE_PATH` | Base path for projects | `~/claude-projects` |
-| `MAX_SESSIONS` | Maximum concurrent sessions | `10` |
-| `DEFAULT_TIMEOUT` | Session timeout (seconds) | `300` |
-| `ENABLE_STREAMING` | Enable real-time streaming | `true` |
-| `ENABLE_THREADING` | Auto-create Discord threads | `true` |
-| `ENABLE_PERSISTENCE` | Save sessions to database | `true` |
-| `REACTION_SHORTCUTS` | Enable reaction controls | `true` |
+Key configuration categories:
+
+| Category | Variables | Description |
+|----------|-----------|-------------|
+| **Discord** | `DISCORD_TOKEN`, `CLIENT_ID`, etc. | Bot authentication and permissions |
+| **Claude** | `CLAUDE_API_KEY`, `MODEL`, etc. | AI configuration and limits |
+| **GitHub** | `GITHUB_TOKEN`, `DEFAULT_ORG` | GitHub integration settings |
+| **Security** | `SANDBOX_ENABLED`, `RATE_LIMITS` | Security and access controls |
+| **Features** | `FEATURE_*` flags | Enable/disable specific features |
+| **Webhook** | `WEBHOOK_PORT`, `SECRET` | GitHub webhook configuration |
+| **Database** | `DATABASE_PATH`, migrations | Data persistence settings |
+| **Backup** | `BACKUP_DIR`, `SCHEDULE` | Automated backup configuration |
 
 ### Advanced Features
 
@@ -310,16 +436,45 @@ graph TD
     CLI --> OP[Output Parser]
     OP --> EF[Embed Formatter]
     EF --> Discord[Discord Channel]
+    
+    Bot --> FM[File Manager]
+    Bot --> GM[Git Manager]
+    Bot --> WM[Web Manager]
+    Bot --> BM[Bash Manager]
+    
+    GM --> GH[GitHub API]
+    WM --> WS[Web Services]
+    BM --> PS[Process System]
+    
+    Bot --> TEM[Template Manager]
+    Bot --> COL[Collaboration Manager]
+    Bot --> TOK[Token Counter]
+    Bot --> SEC[Security Manager]
 ```
 
 ### Key Components
 
+#### Core Systems
 - **Session Manager** - Orchestrates multiple Claude sessions with persistence
 - **Tmux Manager** - Primary session handler using tmux for reliability
 - **PTY Manager** - Fallback session handler for non-tmux environments
 - **Output Parser** - Intelligently parses and formats Claude's responses
 - **Component Handler** - Manages all Discord interaction components
 - **Command System** - Modular slash command implementation
+
+#### Advanced Managers
+- **File Manager** - Secure file operations with sandboxing
+- **Git Manager** - Full Git operations with simple-git
+- **GitHub Integration** - PR, issue, and workflow management
+- **Web Manager** - Web fetching and API requests
+- **Bash Manager** - Command execution with security
+- **Process Manager** - Background task orchestration
+- **Template Manager** - AI persona management
+- **Collaboration Manager** - Multi-user session control
+- **Token Counter** - Usage tracking and budgets
+- **Security Manager** - Rate limiting and validation
+- **Pagination Manager** - Large output handling
+- **Syntax Highlighter** - Code formatting for 15+ languages
 
 ## 🔧 Development
 
@@ -362,8 +517,12 @@ claude-discord-bridge/
 | `npm run lint` | Run ESLint on source files |
 | `npm run format` | Format code with Prettier |
 | `npm test` | Run test suite |
+| `npm run setup` | Interactive setup wizard for first-time configuration |
 | `npm run db:init` | Initialize SQLite database |
+| `npm run migrate` | Run database migrations |
 | `npm run doctor` | Run system diagnostic checks |
+| `npm run health` | Comprehensive health check with detailed report |
+| `npm run backup` | Create or restore backups |
 | `npm run register` | Register Discord slash commands |
 
 ### Running Tests
@@ -549,14 +708,27 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ## 🗺️ Roadmap
 
+### ✅ Completed Features
+- [x] Git integration with full GitHub support
+- [x] Collaborative coding sessions
+- [x] Code execution sandboxing
+- [x] Web integration and search
+- [x] Process management system
+- [x] Template system with AI personas
+- [x] Token tracking and budgets
+- [x] Advanced file operations
+
+### 🚧 In Progress
 - [ ] Web dashboard for session management
-- [ ] Voice channel support
-- [ ] Multi-language support
 - [ ] Plugin system for custom tools
+
+### 📋 Planned
+- [ ] Voice channel support
+- [ ] Multi-language support (i18n)
 - [ ] Claude API fallback option
-- [ ] Collaborative coding sessions
-- [ ] Code execution sandboxing
-- [ ] Git integration
+- [ ] Custom webhook integrations
+- [ ] Jupyter notebook support
+- [ ] Container orchestration
 
 ## ⭐ Star History
 

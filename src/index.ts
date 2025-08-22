@@ -8,6 +8,20 @@ import { commands, registerCommands } from './discord/commands';
 import { contextMenuCommands } from './discord/context-menus';
 import { logger } from './utils/logger';
 import { config } from './config';
+import { WebhookServer } from './webhook/server';
+import { EventNotifier } from './webhook/event-notifier';
+import { SessionTemplateManager } from './claude/session-templates';
+import { SessionCollaborationManager } from './claude/session-collaboration';
+import { TokenCounter } from './utils/token-counter';
+import { SecurityManager } from './utils/security-manager';
+import { GitManager } from './claude/git-manager';
+import { GitHubIntegration } from './integrations/github-integration';
+import { ProcessManager } from './claude/process-manager';
+import { PaginationManager } from './utils/pagination-manager';
+import { OutputFormatter } from './utils/output-formatter';
+import { SyntaxHighlighter } from './utils/syntax-highlighter';
+import { MetricsCollector } from './monitoring/metrics';
+import { HealthMonitor } from './monitoring/health';
 
 dotenv.config();
 
@@ -15,6 +29,18 @@ class ClaudeDiscordBridge {
   private client: Client;
   private sessionManager: SessionManager;
   private componentHandler: ComponentHandler;
+  private webhookServer?: WebhookServer;
+  private eventNotifier?: EventNotifier;
+  private templateManager: SessionTemplateManager;
+  private collaborationManager: SessionCollaborationManager;
+  private tokenCounter: TokenCounter;
+  private securityManager: SecurityManager;
+  private gitManager: GitManager;
+  private githubIntegration?: GitHubIntegration;
+  private processManager: ProcessManager;
+  private paginationManager: PaginationManager;
+  private metricsCollector: MetricsCollector;
+  private healthMonitor: HealthMonitor;
 
   constructor() {
     this.client = new Client({
@@ -23,25 +49,83 @@ class ClaudeDiscordBridge {
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.GuildMessageReactions
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildWebhooks
       ]
     });
 
+    // Initialize core managers
     this.sessionManager = new SessionManager();
     this.componentHandler = new ComponentHandler(this.sessionManager);
+    this.templateManager = SessionTemplateManager.getInstance();
+    this.collaborationManager = SessionCollaborationManager.getInstance();
+    this.tokenCounter = TokenCounter.getInstance();
+    this.securityManager = SecurityManager.getInstance();
+    this.gitManager = GitManager.getInstance();
+    this.processManager = ProcessManager.getInstance();
+    this.paginationManager = PaginationManager.getInstance();
+    this.metricsCollector = MetricsCollector.getInstance();
+    this.healthMonitor = HealthMonitor.getInstance(config.health?.port || 3001);
+    
+    // Initialize GitHub integration if configured
+    if (config.github?.token) {
+      this.githubIntegration = GitHubIntegration.getInstance();
+    }
+    
+    // Setup monitoring
+    this.healthMonitor.setSessionManager(this.sessionManager);
     
     this.setupEventHandlers();
   }
 
   private setupEventHandlers(): void {
-    this.client.once(Events.ClientReady, (client) => {
+    this.client.once(Events.ClientReady, async (client) => {
       logger.info(`✅ Logged in as ${client.user.tag}`);
-      this.sessionManager.restoreSessions();
       
+      // Restore sessions
+      await this.sessionManager.restoreSessions();
+      
+      // Start webhook server if configured
+      if (config.webhook?.enabled) {
+        try {
+          this.webhookServer = new WebhookServer(config.webhook.port);
+          this.eventNotifier = new EventNotifier(this.client);
+          await this.webhookServer.start();
+          logger.info(`🌐 Webhook server started on port ${config.webhook.port}`);
+        } catch (error) {
+          logger.error('Failed to start webhook server:', error);
+        }
+      }
+      
+      // Initialize collaboration manager with Discord client
+      this.collaborationManager.setDiscordClient(this.client);
+      
+      // Start health monitoring
+      this.healthMonitor.setDiscordClient(this.client);
+      await this.healthMonitor.start();
+      logger.info(`🏥 Health monitor started on port ${config.health?.port || 3001}`);
+      
+      // Update metrics
+      this.metricsCollector.updateDiscordMetrics(
+        client.guilds.cache.size,
+        client.users.cache.size,
+        client.channels.cache.size,
+        client.ws.ping
+      );
+      
+      // Set bot activity
       client.user.setActivity({
         name: 'Claude Code',
         type: 2
       });
+      
+      // Log system info
+      logger.info('📊 System initialized:');
+      logger.info(`  - Templates: ${this.templateManager.getAllTemplates().length}`);
+      logger.info(`  - Security: ${config.security?.enabled ? 'Enabled' : 'Disabled'}`);
+      logger.info(`  - GitHub: ${this.githubIntegration ? 'Connected' : 'Not configured'}`);
+      logger.info(`  - Webhook: ${this.webhookServer ? 'Running' : 'Disabled'}`);
     });
 
     this.client.on(Events.InteractionCreate, async (interaction) => {
@@ -122,8 +206,31 @@ class ClaudeDiscordBridge {
 
     process.on('SIGINT', async () => {
       logger.info('Shutting down gracefully...');
+      
+      // Save all sessions
       await this.sessionManager.saveAllSessions();
+      
+      // Stop webhook server
+      if (this.webhookServer) {
+        await this.webhookServer.stop();
+      }
+      
+      // Cleanup process manager
+      await this.processManager.cleanup();
+      
+      // Cleanup collaboration sessions
+      this.collaborationManager.cleanup();
+      
+      // Stop health monitor
+      await this.healthMonitor.stop();
+      
+      // Cleanup metrics
+      this.metricsCollector.destroy();
+      
+      // Destroy Discord client
       await this.client.destroy();
+      
+      logger.info('Shutdown complete');
       process.exit(0);
     });
 
@@ -140,10 +247,27 @@ class ClaudeDiscordBridge {
     const command = commands.get(interaction.commandName);
     if (!command) return;
     
+    const commandId = `${interaction.commandName}-${Date.now()}`;
+    this.metricsCollector.startCommandTimer(commandId);
+    
     try {
       await command.execute(interaction, this.sessionManager);
-    } catch (error) {
+      this.metricsCollector.endCommandTimer(
+        commandId,
+        interaction.commandName,
+        interaction.user.id,
+        true
+      );
+    } catch (error: any) {
       logger.error(`Command error (${interaction.commandName}):`, error);
+      this.metricsCollector.endCommandTimer(
+        commandId,
+        interaction.commandName,
+        interaction.user.id,
+        false,
+        error.message
+      );
+      
       const errorMessage = '❌ An error occurred while executing this command.';
       
       if (!interaction.replied && !interaction.deferred) {
@@ -195,8 +319,19 @@ class ClaudeDiscordBridge {
 
   async start(): Promise<void> {
     try {
+      // Initialize managers
       await this.sessionManager.initialize();
+      await this.gitManager.initialize();
+      
+      // Pass managers to session manager for integration
+      this.sessionManager.setTemplateManager(this.templateManager);
+      this.sessionManager.setTokenCounter(this.tokenCounter);
+      this.sessionManager.setCollaborationManager(this.collaborationManager);
+      
+      // Register commands
       await this.registerAllCommands();
+      
+      // Login to Discord
       await this.client.login(config.discord.token);
     } catch (error) {
       logger.error('Failed to start bot:', error);

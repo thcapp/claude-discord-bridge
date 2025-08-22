@@ -557,6 +557,358 @@ View system logs.
 
 ---
 
+## File Operations
+
+### `/file read`
+Read file contents with syntax highlighting.
+
+**Options:**
+- `path` (required) - File path to read
+- `start` (optional) - Starting line number
+- `end` (optional) - Ending line number
+
+**Examples:**
+```
+/file read path:src/index.ts
+/file read path:config.json start:10 end:50
+```
+
+### `/file write`
+Create or overwrite a file.
+
+**Options:**
+- `path` (required) - File path to write
+- `content` (required) - Content to write
+- `overwrite` (optional) - Overwrite if exists
+
+**Examples:**
+```
+/file write path:README.md content:"# My Project"
+/file write path:src/new.js content:"console.log('Hello');" overwrite:true
+```
+
+### `/file edit`
+Edit files with find and replace.
+
+**Options:**
+- `path` (required) - File to edit
+- `find` (required) - Text to find
+- `replace` (required) - Replacement text
+- `all` (optional) - Replace all occurrences
+
+**Examples:**
+```
+/file edit path:config.js find:"localhost" replace:"127.0.0.1"
+/file edit path:app.js find:"var" replace:"const" all:true
+```
+
+### `/file search`
+Search files with regex support.
+
+**Options:**
+- `pattern` (required) - Search pattern (regex supported)
+- `path` (optional) - Directory to search in
+- `type` (optional) - File type filter
+
+**Examples:**
+```
+/file search pattern:"TODO"
+/file search pattern:"function.*test" path:src type:js
+/file search pattern:"import.*React" type:tsx
+```
+
+### `/file delete`
+Delete files or directories.
+
+**Options:**
+- `path` (required) - Path to delete
+- `force` (optional) - Skip confirmation
+
+**Examples:**
+```
+/file delete path:temp.txt
+/file delete path:old-backup force:true
+```
+
+### `/file ls`
+List directory contents.
+
+**Options:**
+- `path` (optional) - Directory path
+- `hidden` (optional) - Show hidden files
+- `sort` (optional) - Sort by (name, size, date)
+
+**Examples:**
+```
+/file ls
+/file ls path:src hidden:true
+/file ls path:dist sort:size
+```
+
+### `/file tree`
+Display directory tree structure.
+
+**Options:**
+- `path` (optional) - Root directory
+- `depth` (optional) - Max depth to display
+- `ignore` (optional) - Patterns to ignore
+
+**Examples:**
+```
+/file tree
+/file tree path:src depth:3
+/file tree ignore:node_modules,dist
+```
+
+---
+
+## Web Integration
+
+### `/web search`
+Search the web and get summarized results.
+
+**Options:**
+- `query` (required) - Search query
+- `limit` (optional) - Number of results
+
+**Examples:**
+```
+/web search query:"TypeScript best practices"
+/web search query:"React hooks tutorial" limit:5
+```
+
+### `/web fetch`
+Fetch and parse web pages.
+
+**Options:**
+- `url` (required) - URL to fetch
+- `selector` (optional) - CSS selector to extract
+
+**Examples:**
+```
+/web fetch url:https://docs.python.org
+/web fetch url:https://api.github.com/repos/nodejs/node selector:".content"
+```
+
+### `/web api`
+Make API requests.
+
+**Options:**
+- `url` (required) - API endpoint
+- `method` (optional) - HTTP method
+- `headers` (optional) - Request headers
+- `body` (optional) - Request body
+
+**Examples:**
+```
+/web api url:https://api.github.com/user
+/web api url:https://jsonplaceholder.typicode.com/posts method:POST body:{"title":"Test"}
+```
+
+---
+
+## Bash & Process Management
+
+### `/bash run`
+Execute bash commands safely.
+
+**Options:**
+- `command` (required) - Command to execute
+- `timeout` (optional) - Timeout in seconds
+- `background` (optional) - Run in background
+
+**Examples:**
+```
+/bash run command:"ls -la"
+/bash run command:"npm test" timeout:60
+/bash run command:"npm run dev" background:true
+```
+
+### `/bash process`
+Manage background processes.
+
+**Options:**
+- `action` (required) - list, info, kill
+- `id` (optional) - Process ID
+
+**Examples:**
+```
+/bash process action:list
+/bash process action:info id:process_123
+/bash process action:kill id:process_123
+```
+
+---
+
+## Git Operations
+
+### `/git status`
+Show repository status.
+
+**Examples:**
+```
+/git status
+```
+
+### `/git commit`
+Create a commit.
+
+**Options:**
+- `message` (required) - Commit message
+- `all` (optional) - Stage all changes
+
+**Examples:**
+```
+/git commit message:"Fix authentication bug"
+/git commit message:"Add new feature" all:true
+```
+
+### `/git branch`
+Manage branches.
+
+**Options:**
+- `action` (optional) - create, switch, delete, list
+- `name` (optional) - Branch name
+
+**Examples:**
+```
+/git branch action:list
+/git branch action:create name:feature/auth
+/git branch action:switch name:main
+```
+
+### `/git push`
+Push to remote repository.
+
+**Examples:**
+```
+/git push
+/git push remote:origin branch:main
+```
+
+### `/git pull`
+Pull from remote repository.
+
+**Examples:**
+```
+/git pull
+/git pull remote:origin branch:main
+```
+
+---
+
+## GitHub Integration
+
+### `/github pr`
+Manage pull requests.
+
+**Options:**
+- `action` (required) - create, list, merge, close
+- `title` (optional) - PR title
+- `body` (optional) - PR description
+
+**Examples:**
+```
+/github pr action:create title:"Add login feature"
+/github pr action:list
+/github pr action:merge number:42
+```
+
+### `/github issue`
+Manage issues.
+
+**Options:**
+- `action` (required) - create, list, close, comment
+- `title` (optional) - Issue title
+- `body` (optional) - Issue description
+
+**Examples:**
+```
+/github issue action:create title:"Bug in auth"
+/github issue action:list
+/github issue action:comment number:15 body:"Fixed"
+```
+
+---
+
+## Template System
+
+### `/template list`
+List available AI templates.
+
+**Available Templates:**
+- `reviewer` - Code review expert
+- `architect` - System design specialist
+- `debugger` - Bug fixing expert
+- `teacher` - Educational explanations
+- `devops` - CI/CD and infrastructure
+- `fullstack` - Full-stack development
+- `datascientist` - Data analysis and ML
+- `security` - Security analysis
+
+**Examples:**
+```
+/template list
+/template use name:reviewer
+```
+
+---
+
+## Collaboration
+
+### `/collab invite`
+Invite users to session.
+
+**Examples:**
+```
+/collab invite user:@teammate
+/collab invite user:@mentor role:observer
+```
+
+### `/collab mode`
+Set collaboration mode.
+
+**Examples:**
+```
+/collab mode mode:collaborative
+/collab mode mode:handoff
+```
+
+---
+
+## Token Management
+
+### `/token usage`
+View token consumption.
+
+**Examples:**
+```
+/token usage
+/token usage period:today
+```
+
+### `/token budget`
+Set usage limits.
+
+**Examples:**
+```
+/token budget daily:10000
+/token budget monthly:500000
+```
+
+---
+
+## Context Menu Commands
+
+Right-click on any message to access:
+- **Analyze Code** - Deep code analysis
+- **Debug Error** - Debug errors and stack traces
+- **Explain Selection** - Detailed explanations
+- **Optimize Code** - Performance suggestions
+- **Security Scan** - Vulnerability check
+
+---
+
 ## Help System
 
 ### `/help`
@@ -568,9 +920,7 @@ Get help and documentation.
 **Examples:**
 ```
 /help
-/help topic:start
 /help topic:commands
-/help topic:sessions
 /help topic:troubleshoot
 ```
 
@@ -647,6 +997,71 @@ Get help and documentation.
 
 ### Automated Testing Pipeline
 ```
+/code review [attach file]
+/code test framework:jest
+/bash run command:"npm test"
+/git commit message:"Add tests" all:true
+/github pr action:create title:"Add test coverage"
+```
+
+### Full Development Workflow
+```
+# Start with template
+/template use name:fullstack
+
+# Create project
+/project create name:api template:express
+
+# Develop feature
+/claude chat message:"Create user authentication"
+/file write path:src/auth.js content:[generated code]
+
+# Test
+/bash run command:"npm test"
+
+# Version control
+/git commit message:"Add authentication" all:true
+/git push
+
+# Deploy
+/github workflow name:"Deploy"
+```
+
+---
+
+## Tips and Best Practices
+
+### Performance Optimization
+- Use `/token stats` to monitor usage
+- Enable caching for repeated operations
+- Use templates for consistent behavior
+- Batch file operations when possible
+
+### Security
+- Never commit sensitive data
+- Use environment variables for secrets
+- Enable sandboxing for file operations
+- Review bash commands before execution
+
+### Collaboration
+- Use observation mode for training
+- Set clear permissions for team members
+- Document session purpose with `/session rename`
+- Export important sessions for reference
+
+---
+
+## Quick Reference
+
+### Most Used Commands
+```
+/claude chat           # Start conversation
+/claude continue       # Continue response
+/file read            # Read files
+/git status           # Check git status
+/bash run             # Execute commands
+/session list         # View sessions
+/help                 # Get help
 /code review
 # After review
 /code fix error:"[issues from review]"

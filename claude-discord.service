@@ -1,0 +1,51 @@
+[Unit]
+Description=Claude Discord Bridge Bot
+Documentation=https://github.com/yourusername/claude-discord-bridge
+After=network.target
+
+[Service]
+Type=simple
+User=nodejs
+Group=nodejs
+WorkingDirectory=/opt/claude-discord-bridge
+
+# Environment
+Environment="NODE_ENV=production"
+EnvironmentFile=/opt/claude-discord-bridge/.env
+
+# Start command
+ExecStart=/usr/bin/node /opt/claude-discord-bridge/dist/index.js
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits
+LimitNOFILE=4096
+LimitNPROC=512
+
+# Memory limits
+MemoryLimit=2G
+MemorySwapMax=0
+
+# CPU limits
+CPUQuota=200%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/claude-discord-bridge/data /opt/claude-discord-bridge/logs /opt/claude-discord-bridge/backups /opt/claude-discord-bridge/sandbox
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-discord
+
+# Timeouts
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

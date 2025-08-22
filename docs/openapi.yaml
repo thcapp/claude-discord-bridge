@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: Claude Discord Bridge API
+  description: |
+    API documentation for Claude Discord Bridge monitoring, health, and webhook endpoints.
+    
+    This API provides:
+    - Health monitoring endpoints
+    - Prometheus metrics
+    - GitHub webhook receiver
+    - System status information
+  version: 1.0.0
+  contact:
+    name: Claude Discord Bridge Team
+    url: https://github.com/yourusername/claude-discord-bridge
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: Health monitoring server
+  - url: http://localhost:3000
+    description: Webhook server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Metrics
+    description: Prometheus metrics and statistics
+  - name: Webhook
+    description: GitHub webhook endpoints
+  - name: Status
+    description: Detailed status information
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns overall health status of the bot
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is degraded or unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Checks if the bot is ready to serve requests
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: true
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: false
+
+  /live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Simple check to verify the service is alive
+      operationId: getLiveness
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alive:
+                    type: boolean
+                    example: true
+                  timestamp:
+                    type: integer
+                    example: 1643723400000
+
+  /metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Prometheus metrics
+      description: Returns metrics in Prometheus format
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP discord_commands_total Total number of commands executed
+                  # TYPE discord_commands_total counter
+                  discord_commands_total 1234 1643723400000
+
+  /status:
+    get:
+      tags:
+        - Status
+      summary: Detailed status
+      description: Returns comprehensive status information
+      operationId: getStatus
+      responses:
+        '200':
+          description: Detailed status information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /version:
+    get:
+      tags:
+        - Status
+      summary: Version information
+      description: Returns version information about the bot
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: claude-discord-bridge
+                  version:
+                    type: string
+                    example: 1.0.0
+                  node:
+                    type: string
+                    example: v18.17.0
+                  discord:
+                    type: string
+                    example: 14.14.1
+
+  /webhook:
+    post:
+      tags:
+        - Webhook
+      summary: GitHub webhook receiver
+      description: Receives and processes GitHub webhook events
+      operationId: postWebhook
+      parameters:
+        - in: header
+          name: X-GitHub-Event
+          schema:
+            type: string
+          required: true
+          description: GitHub event type
+        - in: header
+          name: X-Hub-Signature-256
+          schema:
+            type: string
+          required: true
+          description: HMAC signature for verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: GitHub webhook payload
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Event processed
+        '400':
+          description: Invalid request
+        '401':
+          description: Invalid signature
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+        timestamp:
+          type: integer
+          example: 1643723400000
+        uptime:
+          type: integer
+          description: Uptime in milliseconds
+          example: 3600000
+        checks:
+          type: object
+          properties:
+            discord:
+              $ref: '#/components/schemas/CheckResult'
+            database:
+              $ref: '#/components/schemas/CheckResult'
+            filesystem:
+              $ref: '#/components/schemas/CheckResult'
+            memory:
+              $ref: '#/components/schemas/CheckResult'
+            sessions:
+              $ref: '#/components/schemas/CheckResult'
+        metrics:
+          type: object
+          description: Summary metrics
+
+    CheckResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pass, warn, fail]
+          example: pass
+        message:
+          type: string
+          example: Connected (45ms)
+        details:
+          type: object
+          additionalProperties: true
+
+    StatusResponse:
+      type: object
+      properties:
+        application:
+          type: object
+          properties:
+            name:
+              type: string
+            version:
+              type: string
+            environment:
+              type: string
+            node:
+              type: string
+            pid:
+              type: integer
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+        discord:
+          type: object
+          properties:
+            ready:
+              type: boolean
+            guilds:
+              type: integer
+            users:
+              type: integer
+            channels:
+              type: integer
+            ping:
+              type: integer
+            uptime:
+              type: integer
+        system:
+          type: object
+          properties:
+            platform:
+              type: string
+            arch:
+              type: string
+            cpus:
+              type: integer
+            totalMemory:
+              type: integer
+            freeMemory:
+              type: integer
+            loadAverage:
+              type: array
+              items:
+                type: number
+            uptime:
+              type: number
+        metrics:
+          type: object
+          properties:
+            uptime:
+              type: integer
+            totalCommands:
+              type: integer
+            successRate:
+              type: number
+            averageResponseTime:
+              type: number
+            memoryUsage:
+              type: number
+            activeUsers:
+              type: integer
+            errorRate:
+              type: number
+        configuration:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    WebhookSignature:
+      type: apiKey
+      in: header
+      name: X-Hub-Signature-256
+      description: GitHub webhook signature for verification

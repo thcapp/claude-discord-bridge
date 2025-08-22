@@ -20,6 +20,8 @@ data/
 # Logs
 logs/
 *.log
+pm2-*.log
+*.pid
 
 # IDE
 .vscode/
@@ -36,3 +38,18 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Sandbox
+sandbox/
+
+# Health reports
+health-report.json
+
+# Production
+ecosystem.config.js.local
+claude-discord.service.local

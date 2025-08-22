@@ -5,12 +5,18 @@ import { config } from '../config';
 import Database from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { SessionTemplateManager } from './session-templates';
+import { TokenCounter } from '../utils/token-counter';
+import { SessionCollaborationManager } from './session-collaboration';
 
 export class SessionManager {
   private sessions: Collection<string, Session>;
   private db: Database.Database | null = null;
   private userSessionMap: Map<string, Set<string>>;
   private channelSessionMap: Map<string, string>;
+  private templateManager?: SessionTemplateManager;
+  private tokenCounter?: TokenCounter;
+  private collaborationManager?: SessionCollaborationManager;
 
   constructor() {
     this.sessions = new Collection();
@@ -303,5 +309,33 @@ export class SessionManager {
     if (hours > 0) return `${hours}h ${minutes % 60}m`;
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
+  }
+
+  // Integration methods for managers
+  setTemplateManager(manager: SessionTemplateManager): void {
+    this.templateManager = manager;
+    logger.info('Template manager integrated with SessionManager');
+  }
+
+  setTokenCounter(counter: TokenCounter): void {
+    this.tokenCounter = counter;
+    logger.info('Token counter integrated with SessionManager');
+  }
+
+  setCollaborationManager(manager: SessionCollaborationManager): void {
+    this.collaborationManager = manager;
+    logger.info('Collaboration manager integrated with SessionManager');
+  }
+
+  getTemplateManager(): SessionTemplateManager | undefined {
+    return this.templateManager;
+  }
+
+  getTokenCounter(): TokenCounter | undefined {
+    return this.tokenCounter;
+  }
+
+  getCollaborationManager(): SessionCollaborationManager | undefined {
+    return this.collaborationManager;
   }
 }

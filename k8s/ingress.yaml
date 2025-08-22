@@ -1,0 +1,85 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-rpm: "100"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+  - hosts:
+    - bot.yourdomain.com
+    secretName: claude-discord-tls
+  rules:
+  - host: bot.yourdomain.com
+    http:
+      paths:
+      - path: /webhook
+        pathType: Exact
+        backend:
+          service:
+            name: claude-discord-bridge
+            port:
+              name: webhook
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: claude-discord-bridge
+            port:
+              name: health
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: claude-discord-bridge
+            port:
+              name: health
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-discord-bridge
+  namespace: discord-bots
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: claude-discord-bridge
+subjects:
+- kind: ServiceAccount
+  name: claude-discord-bridge
+  namespace: discord-bots
