@@ -24,7 +24,6 @@ export class PostgresAdapter extends EventEmitter {
   private static instance: PostgresAdapter;
   private pool: Pool;
   private config: DatabaseConfig;
-  private isConnected: boolean = false;
   private queryCount: number = 0;
   private errorCount: number = 0;
 
@@ -44,15 +43,15 @@ export class PostgresAdapter extends EventEmitter {
 
   private buildConfig(): DatabaseConfig {
     return {
-      host: config.database?.host || process.env.DB_HOST || 'localhost',
-      port: config.database?.port || parseInt(process.env.DB_PORT || '5432'),
-      database: config.database?.name || process.env.DB_NAME || 'claude_discord',
-      user: config.database?.user || process.env.DB_USER || 'postgres',
-      password: config.database?.password || process.env.DB_PASSWORD || '',
-      max: config.database?.maxConnections || 20,
-      idleTimeoutMillis: config.database?.idleTimeout || 30000,
-      connectionTimeoutMillis: config.database?.connectionTimeout || 2000,
-      ssl: config.database?.ssl || process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: process.env.DB_NAME || 'claude_discord',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+      max: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),
+      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
+      connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000'),
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
     };
   }
 

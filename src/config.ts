@@ -76,6 +76,17 @@ interface Config {
     maxContentSize: number;
     timeout: number;
   };
+  redis?: {
+    enabled: boolean;
+    host: string;
+    port: number;
+    password?: string;
+    db: number;
+    keyPrefix: string;
+    ttl?: number;
+    cluster?: boolean;
+    sentinels?: Array<{ host: string; port: number }>;
+  };
 }
 
 function parseList(value: string | undefined): string[] {
@@ -160,7 +171,19 @@ export const config: Config = {
     blockedDomains: parseList(process.env.WEB_BLOCKED_DOMAINS),
     maxContentSize: parseInt(process.env.WEB_MAX_CONTENT_SIZE || '5242880'), // 5MB
     timeout: parseInt(process.env.WEB_TIMEOUT || '10000') // 10 seconds
-  }
+  },
+  redis: parseBoolean(process.env.REDIS_ENABLED, false) ? {
+    enabled: true,
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD,
+    db: parseInt(process.env.REDIS_DB || '0'),
+    keyPrefix: process.env.REDIS_KEY_PREFIX || 'claude:',
+    ttl: parseInt(process.env.REDIS_TTL || '3600'),
+    cluster: parseBoolean(process.env.REDIS_CLUSTER, false),
+    sentinels: process.env.REDIS_SENTINELS ? 
+      JSON.parse(process.env.REDIS_SENTINELS) : undefined
+  } : undefined
 };
 
 export function validateConfig(): boolean {

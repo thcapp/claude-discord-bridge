@@ -1,0 +1,182 @@
+groups:
+  - name: claude_discord_alerts
+    interval: 30s
+    rules:
+      # Instance health alerts
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: claude-discord
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+
+      # Application health alerts
+      - alert: ApplicationUnhealthy
+        expr: claude_discord_health_status != 1
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "Application health check failing"
+          description: "Claude Discord application health check has been failing for more than 5 minutes."
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage has been above 80% for more than 10 minutes. Current value: {{ $value }}%"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage has been above 85% for more than 10 minutes. Current value: {{ $value }}%"
+
+      # Disk space alert
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 15%. Available: {{ $value }}%"
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "PostgreSQL connection pool is over 80% utilized. Current: {{ $value }}%"
+
+      # Redis memory usage
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+          component: cache
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis is using more than 90% of allocated memory. Current: {{ $value }}%"
+
+      # Discord API errors
+      - alert: HighDiscordAPIErrors
+        expr: rate(discord_api_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+          component: discord
+        annotations:
+          summary: "High Discord API error rate"
+          description: "Discord API error rate is above 0.1 per second. Current: {{ $value }}"
+
+      # Command processing latency
+      - alert: HighCommandLatency
+        expr: histogram_quantile(0.95, rate(discord_command_duration_seconds_bucket[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "High command processing latency"
+          description: "95th percentile command latency is above 5 seconds. Current: {{ $value }}s"
+
+      # Session limit approaching
+      - alert: SessionLimitApproaching
+        expr: claude_discord_active_sessions / claude_discord_max_sessions > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "Active sessions approaching limit"
+          description: "Active sessions are at {{ $value }}% of maximum capacity"
+
+      # Rate limiting triggered
+      - alert: RateLimitingHigh
+        expr: rate(claude_discord_rate_limit_exceeded_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: info
+          service: claude-discord
+        annotations:
+          summary: "High rate of rate limiting"
+          description: "Rate limiting is being triggered frequently. Rate: {{ $value }} per second"
+
+      # Backup failure
+      - alert: BackupFailed
+        expr: time() - claude_discord_last_backup_timestamp > 86400
+        for: 1h
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "Backup not completed in 24 hours"
+          description: "Last successful backup was {{ $value }} seconds ago"
+
+      # Container restart
+      - alert: ContainerRestarting
+        expr: rate(container_restart_count[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting"
+          description: "Container has restarted {{ $value }} times in the last hour"
+
+      # SSL certificate expiry
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 60 * 60
+        for: 1h
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} seconds"
+
+      # Error rate threshold
+      - alert: HighErrorRate
+        expr: rate(claude_discord_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-discord
+        annotations:
+          summary: "High application error rate"
+          description: "Error rate is {{ $value }} errors per second"
+
+      # Long running sessions
+      - alert: LongRunningSessions
+        expr: claude_discord_session_duration_seconds > 7200
+        for: 30m
+        labels:
+          severity: info
+          service: claude-discord
+        annotations:
+          summary: "Long running session detected"
+          description: "Session {{ $labels.session_id }} has been running for {{ $value }} seconds"

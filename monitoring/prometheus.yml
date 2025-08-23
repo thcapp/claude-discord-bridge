@@ -1,0 +1,98 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'claude-discord'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - 'alertmanager:9093'
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "alerts.yml"
+  - "recording_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'prometheus'
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: 'production-server'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'node_network_.*'
+        action: drop
+
+  # Application metrics
+  - job_name: 'claude-discord-app'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app:9090']
+        labels:
+          service: 'claude-discord'
+          component: 'application'
+
+  # PostgreSQL metrics
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'claude-discord'
+          component: 'database'
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'claude-discord'
+          component: 'cache'
+
+  # Docker metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['172.17.0.1:9323']
+        labels:
+          service: 'claude-discord'
+          component: 'docker'
+
+  # Nginx metrics (if using nginx-prometheus-exporter)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+        labels:
+          service: 'claude-discord'
+          component: 'proxy'
+
+  # BlackBox exporter for endpoint monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://app:3000/health
+          - http://app:3001/health
+          - http://app:3001/ready
+          - http://app:3001/live
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

@@ -1,9 +1,7 @@
 import { EventEmitter } from 'events';
 import { spawn, ChildProcess } from 'child_process';
-import * as pty from 'node-pty';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
 import fs from 'fs/promises';
 
 interface ManagedProcess {
@@ -12,7 +10,7 @@ interface ManagedProcess {
   command: string;
   cwd: string;
   userId: string;
-  process: ChildProcess | pty.IPty;
+  process: ChildProcess;
   status: 'running' | 'stopped' | 'error' | 'killed';
   startTime: number;
   endTime?: number;
@@ -61,17 +59,14 @@ export class ProcessManager extends EventEmitter {
     const processId = uuidv4();
     const processName = name || command.split(' ')[0];
 
-    // Use PTY for better terminal emulation
-    const ptyProcess = pty.spawn('bash', ['-c', command], {
-      name: 'xterm-color',
-      cols: 80,
-      rows: 30,
+    // Use spawn for process execution
+    const childProcess = spawn('bash', ['-c', command], {
       cwd,
       env: {
         ...process.env,
-        TERM: 'xterm-color',
         NODE_ENV: 'production'
-      }
+      },
+      stdio: ['pipe', 'pipe', 'pipe']
     });
 
     const managedProcess: ManagedProcess = {
@@ -80,7 +75,7 @@ export class ProcessManager extends EventEmitter {
       command,
       cwd,
       userId,
-      process: ptyProcess,
+      process: childProcess,
       status: 'running',
       startTime: Date.now(),
       output: [],
@@ -89,13 +84,17 @@ export class ProcessManager extends EventEmitter {
     };
 
     // Handle output
-    ptyProcess.onData((data: string) => {
-      this.handleProcessOutput(processId, data, 'stdout');
+    childProcess.stdout?.on('data', (data: Buffer) => {
+      this.handleProcessOutput(processId, data.toString(), 'stdout');
+    });
+
+    childProcess.stderr?.on('data', (data: Buffer) => {
+      this.handleProcessOutput(processId, data.toString(), 'stderr');
     });
 
     // Handle exit
-    ptyProcess.onExit((exitCode) => {
-      this.handleProcessExit(processId, exitCode.exitCode);
+    childProcess.on('exit', (exitCode: number | null) => {
+      this.handleProcessExit(processId, exitCode || 0);
     });
 
     this.processes.set(processId, managedProcess);
@@ -118,26 +117,25 @@ export class ProcessManager extends EventEmitter {
     let killed = false;
 
     return new Promise((resolve, reject) => {
-      const ptyProcess = pty.spawn('bash', ['-c', command], {
-        name: 'xterm-color',
-        cols: 80,
-        rows: 30,
+      const childProcess = spawn('bash', ['-c', command], {
         cwd,
-        env: process.env
+        env: process.env,
+        stdio: ['pipe', 'pipe', 'pipe']
       });
 
       // Set timeout
       const timeoutHandle = setTimeout(() => {
         if (!killed) {
           killed = true;
-          ptyProcess.kill();
+          childProcess.kill();
           reject(new Error(`Command timed out after ${timeout/1000}s`));
         }
       }, timeout);
 
       // Handle output
-      ptyProcess.onData((data: string) => {
-        outputBuffer += data;
+      childProcess.stdout?.on('data', (data: Buffer) => {
+        const dataStr = data.toString();
+        outputBuffer += dataStr;
         
         // Call the streaming callback
         if (onData) {
@@ -150,15 +148,25 @@ export class ProcessManager extends EventEmitter {
         }
       });
 
+      childProcess.stderr?.on('data', (data: Buffer) => {
+        const dataStr = data.toString();
+        outputBuffer += dataStr;
+        
+        // Call the streaming callback
+        if (onData) {
+          onData(outputBuffer);
+        }
+      });
+
       // Handle exit
-      ptyProcess.onExit((exitCode) => {
+      childProcess.on('exit', (exitCode: number | null) => {
         clearTimeout(timeoutHandle);
         
         if (!killed) {
-          if (exitCode.exitCode === 0) {
+          if (exitCode === 0) {
             resolve(outputBuffer);
           } else {
-            reject(new Error(`Command failed with exit code ${exitCode.exitCode}`));
+            reject(new Error(`Command failed with exit code ${exitCode}`));
           }
         }
       });
@@ -170,7 +178,7 @@ export class ProcessManager extends EventEmitter {
         command,
         cwd,
         userId: 'streaming',
-        process: ptyProcess,
+        process: childProcess,
         status: 'running',
         startTime: Date.now(),
         output: [],
@@ -196,7 +204,7 @@ export class ProcessManager extends EventEmitter {
       
       if ('kill' in managedProcess.process) {
         // PTY process
-        (managedProcess.process as pty.IPty).kill(signal);
+        managedProcess.process.kill(signal);
       } else {
         // Regular ChildProcess
         managedProcess.process.kill(signal);
@@ -265,7 +273,9 @@ export class ProcessManager extends EventEmitter {
     try {
       if ('write' in managedProcess.process) {
         // PTY process
-        (managedProcess.process as pty.IPty).write(input);
+        if (managedProcess.process.stdin) {
+          managedProcess.process.stdin.write(input);
+        }
       } else if (managedProcess.process.stdin) {
         // Regular ChildProcess
         managedProcess.process.stdin.write(input);

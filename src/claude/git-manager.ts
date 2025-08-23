@@ -1,19 +1,39 @@
-import simpleGit, { SimpleGit, StatusResult, LogResult, DiffResult } from 'simple-git';
+import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { logger } from '../utils/logger';
 import path from 'path';
-import fs from 'fs/promises';
 
 export class GitManager {
+  private static instance: GitManager;
   private git: SimpleGit;
   private repoPath: string;
 
-  constructor(repoPath: string) {
-    this.repoPath = repoPath;
-    this.git = simpleGit(repoPath);
+  private constructor(repoPath?: string) {
+    this.repoPath = repoPath || process.cwd();
+    this.git = simpleGit(this.repoPath);
     
     // Configure git with sensible defaults
     this.git.addConfig('user.name', process.env.GIT_USER_NAME || 'Claude Bot');
     this.git.addConfig('user.email', process.env.GIT_USER_EMAIL || 'claude@discord.bot');
+  }
+
+  static getInstance(repoPath?: string): GitManager {
+    if (!GitManager.instance) {
+      GitManager.instance = new GitManager(repoPath);
+    }
+    return GitManager.instance;
+  }
+
+  async initialize(): Promise<void> {
+    try {
+      const isRepo = await this.isRepo();
+      if (!isRepo) {
+        logger.info('Initializing git repository...');
+        await this.git.init();
+      }
+      logger.info('Git manager initialized');
+    } catch (error) {
+      logger.error('Failed to initialize git manager:', error);
+    }
   }
 
   async isRepo(): Promise<boolean> {

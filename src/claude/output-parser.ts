@@ -1,5 +1,3 @@
-import { logger } from '../utils/logger';
-
 export interface ParsedOutput {
   type: 'response' | 'progress' | 'error' | 'tool' | 'status';
   content: string;
@@ -10,8 +8,6 @@ export interface ParsedOutput {
 
 export class OutputParser {
   private buffer: string = '';
-  private inCodeBlock: boolean = false;
-  private codeBlockLanguage: string = '';
 
   parse(data: string): ParsedOutput {
     this.buffer += data;
@@ -136,23 +132,23 @@ export class OutputParser {
   }
 
   private detectAndFormatCodeBlocks(text: string): string {
-    const codeBlockRegex = /```(\\w*)\\n([\\s\\S]*?)```/g;
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
     
-    return text.replace(codeBlockRegex, (match, lang, code) => {
+    return text.replace(codeBlockRegex, (_match, lang, code) => {
       const language = lang || 'plaintext';
-      return `\\n\\`\\`\\`${language}\\n${code.trim()}\\n\\`\\`\\`\\n`;
+      return `\n\`\`\`${language}\n${code.trim()}\n\`\`\`\n`;
     });
   }
 
   private formatLists(text: string): string {
-    const lines = text.split('\\n');
+    const lines = text.split('\n');
     const formattedLines: string[] = [];
     let inList = false;
     
     lines.forEach(line => {
       const trimmed = line.trim();
       
-      if (trimmed.match(/^\\d+\\.|^[-*+]\\s/)) {
+      if (trimmed.match(/^\d+\.|^[-*+]\s/)) {
         inList = true;
         formattedLines.push(line);
       } else if (inList && trimmed === '') {
@@ -163,20 +159,18 @@ export class OutputParser {
       }
     });
     
-    return formattedLines.join('\\n');
+    return formattedLines.join('\n');
   }
 
   private cleanupFormatting(text: string): string {
-    text = text.replace(/\\n{3,}/g, '\\n\\n');
-    text = text.replace(/^\\s+|\\s+$/g, '');
-    text = text.replace(/\\t/g, '  ');
+    text = text.replace(/\n{3,}/g, '\n\n');
+    text = text.replace(/^\s+|\s+$/g, '');
+    text = text.replace(/\t/g, '  ');
     
     return text;
   }
 
   reset(): void {
     this.buffer = '';
-    this.inCodeBlock = false;
-    this.codeBlockLanguage = '';
   }
 }

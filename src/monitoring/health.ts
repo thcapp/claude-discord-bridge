@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { Client } from 'discord.js';
 import Database from 'sqlite3';
 import { MetricsCollector } from './metrics';
